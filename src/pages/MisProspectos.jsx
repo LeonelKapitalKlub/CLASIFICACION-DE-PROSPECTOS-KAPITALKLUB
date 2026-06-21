@@ -12,6 +12,15 @@ function diasDesde(fechaStr) {
   return Math.floor(diffMs / (1000 * 60 * 60 * 24))
 }
 
+function linkWhatsapp(telefono) {
+  let numero = (telefono || '').replace(/\D/g, '')
+  if (!numero) return null
+  if (!numero.startsWith('54')) {
+    numero = '54' + numero
+  }
+  return `https://wa.me/${numero}`
+}
+
 function calcularEstadoVisual(p) {
   if (p.es_cliente) {
     return { texto: 'Cliente', clase: 'cliente' }
@@ -151,7 +160,15 @@ export default function MisProspectos() {
               <div className="mp-cardHeader">
                 <div>
                   <div className="mp-nombre">{p.nombre || 'Sin nombre'}</div>
-                  <div className="mp-telefono">{p.telefono}</div>
+                  <a
+                    className="mp-telefono mp-telefono--link"
+                    href={linkWhatsapp(p.telefono)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    📞 {p.telefono} · WhatsApp
+                  </a>
                 </div>
                 <span className={`mp-badge mp-badge--${estado.clase}`}>{estado.texto}</span>
               </div>
@@ -217,4 +234,4 @@ export default function MisProspectos() {
       </div>
     </div>
   )
-      }
+}
