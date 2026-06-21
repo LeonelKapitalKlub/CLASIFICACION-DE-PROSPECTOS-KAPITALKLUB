@@ -1,0 +1,151 @@
+.np-page {
+  max-width: 760px;
+}
+
+.np-title {
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.np-subtitle {
+  color: var(--text-dim);
+  margin-top: 4px;
+  font-size: 14px;
+  margin-bottom: 28px;
+}
+
+.np-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.np-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.np-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.np-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-dim);
+}
+
+.np-label em {
+  font-style: normal;
+  color: var(--text-faint);
+  font-weight: 400;
+}
+
+.np-input {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 11px 12px;
+  font-size: 14.5px;
+  color: var(--text);
+  width: 100%;
+}
+
+.np-input:focus {
+  border-color: var(--verde);
+}
+
+.np-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin-top: 4px;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  max-height: 220px;
+  overflow-y: auto;
+  z-index: 10;
+}
+
+.np-dropdownItem {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  padding: 10px 12px;
+  font-size: 14px;
+  color: var(--text);
+  border-bottom: 1px solid var(--border);
+}
+
+.np-dropdownItem:last-child {
+  border-bottom: none;
+}
+
+.np-dropdownItem:hover {
+  background: var(--verde-bg);
+  color: var(--verde);
+}
+
+.np-dropdownProv {
+  color: var(--text-faint);
+  font-size: 12px;
+}
+
+.np-infoBox {
+  background: var(--azul-bg);
+  color: #93C5FD;
+  font-size: 13.5px;
+  padding: 12px 14px;
+  border-radius: 8px;
+}
+
+.np-error {
+  background: var(--rojo-bg);
+  color: #FCA5A5;
+  font-size: 13.5px;
+  padding: 12px 14px;
+  border-radius: 8px;
+}
+
+.np-exito {
+  background: var(--verde-bg);
+  color: var(--verde);
+  font-size: 13.5px;
+  padding: 12px 14px;
+  border-radius: 8px;
+}
+
+.np-submit {
+  background: var(--verde);
+  color: #0A0E0A;
+  border: none;
+  border-radius: 8px;
+  padding: 14px;
+  font-size: 15px;
+  font-weight: 600;
+  align-self: flex-start;
+  min-width: 220px;
+}
+
+.np-submit:disabled {
+  opacity: 0.6;
+}
+
+@media (max-width: 640px) {
+  .np-grid {
+    grid-template-columns: 1fr;
+  }
+  .np-submit {
+    width: 100%;
+  }
+}
