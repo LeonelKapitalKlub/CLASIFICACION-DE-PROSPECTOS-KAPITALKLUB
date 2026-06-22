@@ -15,19 +15,13 @@ function diasDesde(fechaStr) {
 function linkWhatsapp(telefono) {
   let numero = (telefono || '').replace(/\D/g, '')
   if (!numero) return null
-  if (!numero.startsWith('54')) {
-    numero = '54' + numero
-  }
+  if (!numero.startsWith('54')) numero = '54' + numero
   return `https://wa.me/${numero}`
 }
 
 function calcularEstadoVisual(p) {
-  if (p.es_cliente) {
-    return { texto: 'Cliente', clase: 'cliente' }
-  }
-  if (p.estado_contacto === 'pendiente') {
-    return { texto: 'Pendiente de contacto', clase: 'pendiente' }
-  }
+  if (p.es_cliente) return { texto: 'Cliente', clase: 'cliente' }
+  if (p.estado_contacto === 'pendiente') return { texto: 'Pendiente de contacto', clase: 'pendiente' }
   if (p.estado_contacto === 'respondio') {
     if (p.clasificacion === 'potable') return { texto: 'Potable · dato caliente', clase: 'potable' }
     if (p.clasificacion === 'tibio') return { texto: 'Tibio · dato medio', clase: 'tibio' }
@@ -54,7 +48,6 @@ export default function MisProspectos() {
 
   const cargarDatos = useCallback(async () => {
     setCargando(true)
-
     const { data: locs } = await supabase.from('localidades').select('id, nombre')
     const locMap = {}
     ;(locs || []).forEach((l) => { locMap[l.id] = l.nombre })
@@ -66,9 +59,7 @@ export default function MisProspectos() {
     setAsesoresMap(aMap)
 
     let query = supabase.from('prospectos').select('*').order('created_at', { ascending: false })
-    if (!esSupervisor) {
-      query = query.eq('asesor_id', asesor.id)
-    }
+    if (!esSupervisor) query = query.eq('asesor_id', asesor.id)
     const { data, error } = await query
     if (!error) setProspectos(data || [])
     setCargando(false)
@@ -78,160 +69,4 @@ export default function MisProspectos() {
     if (asesor) cargarDatos()
   }, [asesor, cargarDatos])
 
-  async function marcarPrimerContacto(id) {
-    await supabase
-      .from('prospectos')
-      .update({ fecha_primer_contacto: new Date().toISOString().slice(0, 10) })
-      .eq('id', id)
-    cargarDatos()
-  }
-
-  async function marcarRespuesta(id, respondio) {
-    await supabase
-      .from('prospectos')
-      .update({ estado_contacto: respondio ? 'respondio' : 'no_respondio' })
-      .eq('id', id)
-    cargarDatos()
-  }
-
-  async function clasificar(id, clasificacion) {
-    await supabase
-      .from('prospectos')
-      .update({ clasificacion })
-      .eq('id', id)
-    cargarDatos()
-  }
-
-  async function marcarCliente(id) {
-    await supabase
-      .from('prospectos')
-      .update({ es_cliente: true, fecha_conversion: new Date().toISOString().slice(0, 10) })
-      .eq('id', id)
-    cargarDatos()
-  }
-
-  const prospectosFiltrados = prospectos.filter((p) => {
-    if (filtro === 'todos') return true
-    const estado = calcularEstadoVisual(p)
-    return estado.clase === filtro
-  })
-
-  if (cargando) {
-    return <div className="mp-loading">Cargando prospectos...</div>
-  }
-
-  return (
-    <div className="mp-page">
-      <h1 className="mp-title">Mis prospectos</h1>
-      <p className="mp-subtitle">
-        {prospectos.length} prospecto{prospectos.length !== 1 ? 's' : ''} en total
-      </p>
-
-      <div className="mp-filtros">
-        {[
-          { id: 'todos', label: 'Todos' },
-          { id: 'pendiente', label: 'Pendientes' },
-          { id: 'potable', label: 'Potables' },
-          { id: 'tibio', label: 'Tibios' },
-          { id: 'frio', label: 'Fríos' },
-          { id: 'recontactar', label: 'Recontactar' },
-          { id: 'transferir', label: 'Transferir' },
-          { id: 'cliente', label: 'Clientes' },
-        ].map((f) => (
-          <button
-            key={f.id}
-            className={`mp-filtroBtn ${filtro === f.id ? 'is-active' : ''}`}
-            onClick={() => setFiltro(f.id)}
-          >
-            {f.label}
-          </button>
-        ))}
-      </div>
-
-      {prospectosFiltrados.length === 0 && (
-        <div className="mp-vacio">No hay prospectos en esta categoría.</div>
-      )}
-
-      <div className="mp-lista">
-        {prospectosFiltrados.map((p) => {
-          const estado = calcularEstadoVisual(p)
-          return (
-            <div key={p.id} className={`mp-card mp-card--${estado.clase}`}>
-              <div className="mp-cardHeader">
-                <div>
-                  <div className="mp-nombre">{p.nombre || 'Sin nombre'}</div>
-                  <a
-                    className="mp-telefono mp-telefono--link"
-                    href={linkWhatsapp(p.telefono)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    📞 {p.telefono} · WhatsApp
-                  </a>
-                </div>
-                <span className={`mp-badge mp-badge--${estado.clase}`}>{estado.texto}</span>
-              </div>
-
-              <div className="mp-detalles">
-                {p.localidad_id && localidadesMap[p.localidad_id] && (
-                  <span className="mp-detalle">📍 {localidadesMap[p.localidad_id]}</span>
-                )}
-                {p.producto_interes && (
-                  <span className="mp-detalle">🛍 {p.producto_interes}</span>
-                )}
-                {p.fuente && (
-                  <span className="mp-detalle">↳ {p.fuente}</span>
-                )}
-                {esSupervisor && p.asesor_id && asesoresMap[p.asesor_id] && (
-                  <span className="mp-detalle">👤 {asesoresMap[p.asesor_id]}</span>
-                )}
-              </div>
-
-              {!p.es_cliente && (
-                <div className="mp-acciones">
-                  {p.estado_contacto === 'pendiente' && (
-                    <button className="mp-btn mp-btn--primary" onClick={() => marcarPrimerContacto(p.id)}>
-                      Marcar primer contacto
-                    </button>
-                  )}
-
-                  {p.fecha_primer_contacto && p.estado_contacto !== 'respondio' && (
-                    <>
-                      <button className="mp-btn mp-btn--ok" onClick={() => marcarRespuesta(p.id, true)}>
-                        Respondió
-                      </button>
-                      <button className="mp-btn mp-btn--muted" onClick={() => marcarRespuesta(p.id, false)}>
-                        No respondió
-                      </button>
-                    </>
-                  )}
-
-                  {p.estado_contacto === 'respondio' && !p.clasificacion && (
-                    <>
-                      <button className="mp-btn mp-btn--potable" onClick={() => clasificar(p.id, 'potable')}>
-                        Potable
-                      </button>
-                      <button className="mp-btn mp-btn--tibio" onClick={() => clasificar(p.id, 'tibio')}>
-                        Tibio
-                      </button>
-                      <button className="mp-btn mp-btn--frio" onClick={() => clasificar(p.id, 'frio')}>
-                        Frío
-                      </button>
-                    </>
-                  )}
-
-                  {p.estado_contacto === 'respondio' && (
-                    <button className="mp-btn mp-btn--cliente" onClick={() => marcarCliente(p.id)}>
-                      Convertir en cliente
-                    </button>
-                  )}
-                </div>
-              )}
-            </div>
-          )
-        })}
-      </div>
-    </div>
-  )
-}
+  as
