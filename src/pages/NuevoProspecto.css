@@ -60,6 +60,20 @@
   border-color: var(--verde);
 }
 
+.np-checking {
+  font-size: 12px;
+  color: var(--text-faint);
+}
+
+.np-duplicado {
+  background: var(--naranja-bg);
+  color: #FCD34D;
+  font-size: 12.5px;
+  padding: 9px 11px;
+  border-radius: 7px;
+  line-height: 1.4;
+}
+
 .np-dropdown {
   position: absolute;
   top: 100%;
