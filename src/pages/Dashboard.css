@@ -1,0 +1,206 @@
+.db-loading {
+  color: var(--text-dim);
+  padding: 40px 0;
+  text-align: center;
+}
+
+.db-page {
+  max-width: 860px;
+}
+
+.db-title {
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.db-subtitle {
+  color: var(--text-dim);
+  font-size: 14px;
+  margin-top: 4px;
+  margin-bottom: 28px;
+}
+
+.db-section {
+  margin-bottom: 36px;
+}
+
+.db-sectionTitle {
+  font-weight: 600;
+  margin-bottom: 14px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 12px;
+}
+
+.db-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.db-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 18px 16px;
+}
+
+.db-cardNum {
+  font-family: var(--font-display);
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+.db-cardNum--verde { color: var(--verde); }
+.db-cardNum--naranja { color: var(--naranja); }
+
+.db-cardLabel {
+  font-size: 12.5px;
+  color: var(--text-dim);
+  margin-top: 6px;
+}
+
+.db-asesores {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.db-asesorCard {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.db-asesorHeader {
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-align: left;
+  color: var(--text);
+}
+
+.db-asesorNombre {
+  font-weight: 600;
+  font-size: 15px;
+  min-width: 80px;
+}
+
+.db-asesorResumen {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  flex: 1;
+}
+
+.db-pill {
+  background: var(--surface-raised);
+  border-radius: 20px;
+  padding: 3px 10px;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.db-pill--verde {
+  background: var(--verde-bg);
+  color: var(--verde);
+}
+
+.db-chevron {
+  font-size: 11px;
+  color: var(--text-faint);
+  flex-shrink: 0;
+}
+
+.db-asesorDetalle {
+  border-top: 1px solid var(--border);
+  padding: 14px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.db-asesorMetrica {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13.5px;
+  color: var(--text-dim);
+}
+
+.db-verde { color: var(--verde); }
+.db-naranja { color: var(--naranja); }
+
+.db-campanaFiltros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.db-campanaTabla {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.db-campanaHeader {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  padding: 10px 18px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-bottom: 1px solid var(--border);
+}
+
+.db-campanaFila {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  padding: 13px 18px;
+  font-size: 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.db-campanaFila:last-child {
+  border-bottom: none;
+}
+
+.db-campanaNum {
+  font-weight: 600;
+}
+
+.db-campanaVacio {
+  padding: 24px 18px;
+  color: var(--text-faint);
+  font-size: 14px;
+}
+
+@media (max-width: 640px) {
+  .db-cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .db-asesorHeader {
+    flex-wrap: wrap;
+  }
+
+  .db-campanaHeader,
+  .db-campanaFila {
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+    font-size: 12px;
+    padding: 10px 12px;
+  }
+}
