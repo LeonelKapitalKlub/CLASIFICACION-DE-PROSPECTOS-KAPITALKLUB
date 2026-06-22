@@ -33,6 +33,8 @@ export default function NuevoProspecto() {
   const [guardando, setGuardando] = useState(false)
   const [error, setError] = useState('')
   const [exito, setExito] = useState(false)
+  const [duplicado, setDuplicado] = useState(null)
+  const [verificandoTelefono, setVerificandoTelefono] = useState(false)
 
   useEffect(() => {
     supabase.from('asesores').select('*').order('nombre').then(({ data }) => {
@@ -67,6 +69,26 @@ export default function NuevoProspecto() {
     return () => clearTimeout(timeout)
   }, [busquedaLocalidad])
 
+  useEffect(() => {
+    const telefonoLimpio = form.telefono.replace(/\D/g, '')
+    if (telefonoLimpio.length < 6) {
+      setDuplicado(null)
+      return
+    }
+    setVerificandoTelefono(true)
+    const timeout = setTimeout(async () => {
+      const { data } = await supabase
+        .from('prospectos')
+        .select('id, nombre, telefono, estado_contacto, clasificacion, es_cliente, asesor_id, asesores:asesor_id(nombre)')
+        .ilike('telefono', `%${telefonoLimpio}%`)
+        .limit(1)
+        .maybeSingle()
+      setDuplicado(data || null)
+      setVerificandoTelefono(false)
+    }, 500)
+    return () => clearTimeout(timeout)
+  }, [form.telefono])
+
   function handleChange(campo, valor) {
     setForm((f) => ({ ...f, [campo]: valor }))
   }
@@ -92,6 +114,12 @@ export default function NuevoProspecto() {
     if (!form.asesor_id) {
       setError('Tenés que elegir un asesor designado.')
       return
+    }
+    if (duplicado) {
+      const confirmar = window.confirm(
+        'Este teléfono ya está cargado como prospecto. ¿Querés cargarlo de todas formas?'
+      )
+      if (!confirmar) return
     }
 
     setGuardando(true)
@@ -147,6 +175,18 @@ export default function NuevoProspecto() {
               placeholder="Ej: 3764123456"
               required
             />
+            {verificandoTelefono && (
+              <span className="np-checking">Verificando...</span>
+            )}
+            {duplicado && !verificandoTelefono && (
+              <div className="np-duplicado">
+                ⚠️ Este número ya está cargado{duplicado.nombre ? ` (${duplicado.nombre})` : ''}.
+                {duplicado.asesores?.nombre && <> Asignado a <strong>{duplicado.asesores.nombre}</strong>.</>}
+                {' '}Estado: <strong>
+                  {duplicado.es_cliente ? 'Cliente' : duplicado.clasificacion || duplicado.estado_contacto || 'pendiente'}
+                </strong>
+              </div>
+            )}
           </label>
 
           <label className="np-field" ref={localidadRef} style={{ position: 'relative' }}>
@@ -254,4 +294,4 @@ export default function NuevoProspecto() {
       </form>
     </div>
   )
-      }
+}
