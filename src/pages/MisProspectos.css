@@ -160,3 +160,19 @@
     flex-direction: column;
   }
 }
+.mp-cardHeaderRight {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.mp-btn--eliminar {
+  background: var(--rojo-bg);
+  color: #FCA5A5;
+  border: none;
+  border-radius: 7px;
+  padding: 5px 10px;
+  font-size: 11.5px;
+  font-weight: 600;
+}
