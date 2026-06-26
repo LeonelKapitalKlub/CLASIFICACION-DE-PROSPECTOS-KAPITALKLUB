@@ -38,13 +38,66 @@ function calcularEstadoVisual(p) {
   return { texto: 'Sin estado', clase: 'pendiente' }
 }
 
+function ModalProducto({ prospectoId, onCerrar, onGuardado }) {
+  const [producto, setProducto] = useState('')
+  const [cuota, setCuota] = useState('')
+  const [desde, setDesde] = useState(new Date().toISOString().slice(0, 10))
+  const [guardando, setGuardando] = useState(false)
+  const [error, setError] = useState('')
+
+  async function guardar() {
+    if (!producto.trim()) { setError('Ingresá el nombre del producto.'); return }
+    setGuardando(true)
+    const { error: e } = await supabase.from('productos_cliente').insert({
+      prospecto_id: prospectoId,
+      producto: producto.trim(),
+      valor_cuota: cuota ? parseFloat(cuota) : null,
+      cliente_desde: desde,
+    })
+    setGuardando(false)
+    if (e) { setError('No se pudo guardar. Intentá de nuevo.'); return }
+    onGuardado()
+  }
+
+  return (
+    <div className="modal-overlay" onClick={onCerrar}>
+      <div className="modal-box" onClick={(e) => e.stopPropagation()}>
+        <h2 className="modal-title">Agregar producto</h2>
+        <div className="modal-fields">
+          <label className="np-field">
+            <span className="np-label">Producto <em>(obligatorio)</em></span>
+            <input className="np-input" value={producto} onChange={(e) => setProducto(e.target.value)} placeholder="Ej: Moto Honda Wave 110" />
+          </label>
+          <label className="np-field">
+            <span className="np-label">Valor de cuota <em>(opcional)</em></span>
+            <input className="np-input" type="number" value={cuota} onChange={(e) => setCuota(e.target.value)} placeholder="Ej: 85000" />
+          </label>
+          <label className="np-field">
+            <span className="np-label">Cliente desde</span>
+            <input className="np-input" type="date" value={desde} onChange={(e) => setDesde(e.target.value)} />
+          </label>
+        </div>
+        {error && <div className="np-error">{error}</div>}
+        <div className="modal-acciones">
+          <button className="modal-btn-cancel" onClick={onCerrar}>Cancelar</button>
+          <button className="modal-btn-ok" onClick={guardar} disabled={guardando}>
+            {guardando ? 'Guardando...' : 'Guardar producto'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function MisProspectos() {
   const { asesor, esSupervisor } = useAuth()
   const [prospectos, setProspectos] = useState([])
   const [localidadesMap, setLocalidadesMap] = useState({})
   const [asesoresMap, setAsesoresMap] = useState({})
+  const [productosMap, setProductosMap] = useState({})
   const [cargando, setCargando] = useState(true)
   const [filtro, setFiltro] = useState('todos')
+  const [modalProductoId, setModalProductoId] = useState(null)
 
   const cargarDatos = useCallback(async () => {
     setCargando(true)
@@ -61,7 +114,23 @@ export default function MisProspectos() {
     let query = supabase.from('prospectos').select('*').order('created_at', { ascending: false })
     if (!esSupervisor) query = query.eq('asesor_id', asesor.id)
     const { data, error } = await query
-    if (!error) setProspectos(data || [])
+    if (!error) {
+      setProspectos(data || [])
+      const clienteIds = (data || []).filter((p) => p.es_cliente).map((p) => p.id)
+      if (clienteIds.length > 0) {
+        const { data: prods } = await supabase
+          .from('productos_cliente')
+          .select('*')
+          .in('prospecto_id', clienteIds)
+          .order('cliente_desde', { ascending: false })
+        const pMap = {}
+        ;(prods || []).forEach((prod) => {
+          if (!pMap[prod.prospecto_id]) pMap[prod.prospecto_id] = []
+          pMap[prod.prospecto_id].push(prod)
+        })
+        setProductosMap(pMap)
+      }
+    }
     setCargando(false)
   }, [asesor, esSupervisor])
 
@@ -90,9 +159,7 @@ export default function MisProspectos() {
   }
 
   async function eliminarProspecto(id, nombre, telefono) {
-    const confirmar = window.confirm(
-      `¿Seguro que querés eliminar a ${nombre || telefono}? Esta acción no se puede deshacer.`
-    )
+    const confirmar = window.confirm(`¿Seguro que querés eliminar a ${nombre || telefono}? Esta acción no se puede deshacer.`)
     if (!confirmar) return
     await supabase.from('prospectos').delete().eq('id', id)
     cargarDatos()
@@ -104,125 +171,3 @@ export default function MisProspectos() {
   })
 
   if (cargando) return <div className="mp-loading">Cargando prospectos...</div>
-  return (
-    <div className="mp-page">
-      <h1 className="mp-title">Mis prospectos</h1>
-      <p className="mp-subtitle">
-        {prospectos.length} prospecto{prospectos.length !== 1 ? 's' : ''} en total
-      </p>
-
-      <div className="mp-filtros">
-        {[
-          { id: 'todos', label: 'Todos' },
-          { id: 'pendiente', label: 'Pendientes' },
-          { id: 'potable', label: 'Potables' },
-          { id: 'tibio', label: 'Tibios' },
-          { id: 'frio', label: 'Fríos' },
-          { id: 'recontactar', label: 'Recontactar' },
-          { id: 'transferir', label: 'Transferir' },
-          { id: 'cliente', label: 'Clientes' },
-        ].map((f) => (
-          <button
-            key={f.id}
-            className={`mp-filtroBtn ${filtro === f.id ? 'is-active' : ''}`}
-            onClick={() => setFiltro(f.id)}
-          >
-            {f.label}
-          </button>
-        ))}
-      </div>
-
-      {prospectosFiltrados.length === 0 && (
-        <div className="mp-vacio">No hay prospectos en esta categoría.</div>
-      )}
-
-      <div className="mp-lista">
-        {prospectosFiltrados.map((p) => {
-          const estado = calcularEstadoVisual(p)
-          return (
-            <div key={p.id} className={`mp-card mp-card--${estado.clase}`}>
-              <div className="mp-cardHeader">
-                <div>
-                  <div className="mp-nombre">{p.nombre || 'Sin nombre'}</div>
-                  <a
-                    className="mp-telefono mp-telefono--link"
-                    href={linkWhatsapp(p.telefono)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    📞 {p.telefono} · WhatsApp
-                  </a>
-                </div>
-                <div className="mp-cardHeaderRight">
-                  <span className={`mp-badge mp-badge--${estado.clase}`}>{estado.texto}</span>
-                  {esSupervisor && (
-                    <button
-                      className="mp-btn mp-btn--eliminar"
-                      onClick={() => eliminarProspecto(p.id, p.nombre, p.telefono)}
-                    >
-                      Eliminar
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              <div className="mp-detalles">
-                {p.localidad_id && localidadesMap[p.localidad_id] && (
-                  <span className="mp-detalle">📍 {localidadesMap[p.localidad_id]}</span>
-                )}
-                {p.producto_interes && (
-                  <span className="mp-detalle">🛍 {p.producto_interes}</span>
-                )}
-                {p.fuente && (
-                  <span className="mp-detalle">↳ {p.fuente}</span>
-                )}
-                {esSupervisor && p.asesor_id && asesoresMap[p.asesor_id] && (
-                  <span className="mp-detalle">👤 {asesoresMap[p.asesor_id]}</span>
-                )}
-              </div>
-
-              {!p.es_cliente && (
-                <div className="mp-acciones">
-                  {p.estado_contacto === 'pendiente' && (
-                    <button className="mp-btn mp-btn--primary" onClick={() => marcarPrimerContacto(p.id)}>
-                      Marcar primer contacto
-                    </button>
-                  )}
-                  {p.fecha_primer_contacto && p.estado_contacto !== 'respondio' && (
-                    <>
-                      <button className="mp-btn mp-btn--ok" onClick={() => marcarRespuesta(p.id, true)}>
-                        Respondió
-                      </button>
-                      <button className="mp-btn mp-btn--muted" onClick={() => marcarRespuesta(p.id, false)}>
-                        No respondió
-                      </button>
-                    </>
-                  )}
-                  {p.estado_contacto === 'respondio' && !p.clasificacion && (
-                    <>
-                      <button className="mp-btn mp-btn--potable" onClick={() => clasificar(p.id, 'potable')}>
-                        Potable
-                      </button>
-                      <button className="mp-btn mp-btn--tibio" onClick={() => clasificar(p.id, 'tibio')}>
-                        Tibio
-                      </button>
-                      <button className="mp-btn mp-btn--frio" onClick={() => clasificar(p.id, 'frio')}>
-                        Frío
-                      </button>
-                    </>
-                  )}
-                  {p.estado_contacto === 'respondio' && (
-                    <button className="mp-btn mp-btn--cliente" onClick={() => marcarCliente(p.id)}>
-                      Convertir en cliente
-                    </button>
-                  )}
-                </div>
-              )}
-            </div>
-          )
-        })}
-      </div>
-    </div>
-  )
-}
