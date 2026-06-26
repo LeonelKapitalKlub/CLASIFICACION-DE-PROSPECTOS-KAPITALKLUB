@@ -171,3 +171,126 @@ export default function MisProspectos() {
   })
 
   if (cargando) return <div className="mp-loading">Cargando prospectos...</div>
+return (
+    <div className="mp-page">
+      <h1 className="mp-title">Mis prospectos</h1>
+      <p className="mp-subtitle">
+        {prospectos.length} prospecto{prospectos.length !== 1 ? 's' : ''} en total
+      </p>
+
+      <div className="mp-filtros">
+        {[
+          { id: 'todos', label: 'Todos' },
+          { id: 'pendiente', label: 'Pendientes' },
+          { id: 'potable', label: 'Potables' },
+          { id: 'tibio', label: 'Tibios' },
+          { id: 'frio', label: 'Fríos' },
+          { id: 'recontactar', label: 'Recontactar' },
+          { id: 'transferir', label: 'Transferir' },
+          { id: 'cliente', label: 'Clientes' },
+        ].map((f) => (
+          <button key={f.id} className={`mp-filtroBtn ${filtro === f.id ? 'is-active' : ''}`} onClick={() => setFiltro(f.id)}>
+            {f.label}
+          </button>
+        ))}
+      </div>
+
+      {prospectosFiltrados.length === 0 && (
+        <div className="mp-vacio">No hay prospectos en esta categoría.</div>
+      )}
+
+      <div className="mp-lista">
+        {prospectosFiltrados.map((p) => {
+          const estado = calcularEstadoVisual(p)
+          const productos = productosMap[p.id] || []
+          return (
+            <div key={p.id} className={`mp-card mp-card--${estado.clase}`}>
+              <div className="mp-cardHeader">
+                <div>
+                  <div className="mp-nombre">{p.nombre || 'Sin nombre'}</div>
+                  <a className="mp-telefono mp-telefono--link" href={linkWhatsapp(p.telefono)} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}>
+                    📞 {p.telefono} · WhatsApp
+                  </a>
+                </div>
+                <div className="mp-cardHeaderRight">
+                  <span className={`mp-badge mp-badge--${estado.clase}`}>{estado.texto}</span>
+                  {esSupervisor && (
+                    <button className="mp-btn mp-btn--eliminar" onClick={() => eliminarProspecto(p.id, p.nombre, p.telefono)}>
+                      Eliminar
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              <div className="mp-detalles">
+                {p.localidad_id && localidadesMap[p.localidad_id] && (
+                  <span className="mp-detalle">📍 {localidadesMap[p.localidad_id]}</span>
+                )}
+                {p.producto_interes && <span className="mp-detalle">🛍 {p.producto_interes}</span>}
+                {p.fuente && <span className="mp-detalle">↳ {p.fuente}</span>}
+                {esSupervisor && p.asesor_id && asesoresMap[p.asesor_id] && (
+                  <span className="mp-detalle">👤 {asesoresMap[p.asesor_id]}</span>
+                )}
+              </div>
+
+              {p.es_cliente && (
+                <div className="mp-productos">
+                  {productos.length > 0 && (
+                    <div className="mp-productosList">
+                      {productos.map((prod) => (
+                        <div key={prod.id} className="mp-productoItem">
+                          <span className="mp-productoNombre">📦 {prod.producto}</span>
+                          {prod.valor_cuota && <span className="mp-productoCuota">${Number(prod.valor_cuota).toLocaleString('es-AR')}/mes</span>}
+                          <span className="mp-productoDesde">desde {prod.cliente_desde}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <button className="mp-btn mp-btn--primary" onClick={() => setModalProductoId(p.id)}>
+                    + Agregar producto
+                  </button>
+                </div>
+              )}
+
+              {!p.es_cliente && (
+                <div className="mp-acciones">
+                  {p.estado_contacto === 'pendiente' && (
+                    <button className="mp-btn mp-btn--primary" onClick={() => marcarPrimerContacto(p.id)}>
+                      Marcar primer contacto
+                    </button>
+                  )}
+                  {p.fecha_primer_contacto && p.estado_contacto !== 'respondio' && (
+                    <>
+                      <button className="mp-btn mp-btn--ok" onClick={() => marcarRespuesta(p.id, true)}>Respondió</button>
+                      <button className="mp-btn mp-btn--muted" onClick={() => marcarRespuesta(p.id, false)}>No respondió</button>
+                    </>
+                  )}
+                  {p.estado_contacto === 'respondio' && !p.clasificacion && (
+                    <>
+                      <button className="mp-btn mp-btn--potable" onClick={() => clasificar(p.id, 'potable')}>Potable</button>
+                      <button className="mp-btn mp-btn--tibio" onClick={() => clasificar(p.id, 'tibio')}>Tibio</button>
+                      <button className="mp-btn mp-btn--frio" onClick={() => clasificar(p.id, 'frio')}>Frío</button>
+                    </>
+                  )}
+                  {p.estado_contacto === 'respondio' && (
+                    <button className="mp-btn mp-btn--cliente" onClick={() => marcarCliente(p.id)}>
+                      Convertir en cliente
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          )
+        })}
+      </div>
+
+      {modalProductoId && (
+        <ModalProducto
+          prospectoId={modalProductoId}
+          onCerrar={() => setModalProductoId(null)}
+          onGuardado={() => { setModalProductoId(null); cargarDatos() }}
+        />
+      )}
+    </div>
+  )
+}
